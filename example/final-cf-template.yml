@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: A dummy stack for Booster
+Outputs:
+  apiGatewayInvokeURL:
+    Value:
+      Fn::Sub: https://${RestApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev
+  lambdaArn:
+    Value:
+      Fn::GetAtt: helloWorldFunction.Arn
+Parameters:
+  StageParameter:
+    Default: dev
+    Description: Stage of the Stack, i.e. dev, st, uat, prod
+    Type: String
+Resources:
+  ApiGatewayDeployment:
+    DependsOn:
+    - HelloWorldGetMethod
+    Properties:
+      RestApiId:
+        Ref: RestApiGateway
+      StageName:
+        Ref: StageParameter
+    Type: AWS::ApiGateway::Deployment
+  HelloWorldApiPermission:
+    Properties:
+      Action: lambda:invokeFunction
+      FunctionName:
+        Fn::GetAtt: helloWorldFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+        - ''
+        - - 'arn:aws:execute-api:'
+          - Ref: AWS::Region
+          - ':'
+          - Ref: AWS::AccountId
+          - ':'
+          - Ref: RestApiGateway
+          - /*
+    Type: AWS::Lambda::Permission
+  HelloWorldGetMethod:
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Sub:
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn:
+              Fn::GetAtt: helloWorldFunction.Arn
+      ResourceId:
+        Ref: HelloWorldResource
+      RestApiId:
+        Ref: RestApiGateway
+    Type: AWS::ApiGateway::Method
+  HelloWorldResource:
+    Properties:
+      ParentId:
+        Fn::GetAtt: RestApiGateway.RootResourceId
+      PathPart: hello
+      RestApiId:
+        Ref: RestApiGateway
+    Type: AWS::ApiGateway::Resource
+  RestApiGateway:
+    Properties:
+      Description: Booster CF Api Gateway
+      Name: booster-cf-api
+    Type: AWS::ApiGateway::RestApi
+  helloWorldFunction:
+    DependsOn:
+    - helloWorldLogGroup
+    - lambdaExecutionRole
+    Properties:
+      Code:
+        S3Bucket: booster-cf-test
+        S3Key: 076e177ce7d25753590c594da4b61b48
+      Description: Another Lambda function
+      Environment:
+        Variables:
+          test: something dummy
+      Handler: src/functions/HelloWorld.handler
+      MemorySize: 128
+      Role:
+        Fn::GetAtt: lambdaExecutionRole.Arn
+      Runtime: nodejs8.10
+      Timeout: 5
+    Type: AWS::Lambda::Function
+  helloWorldLogGroup:
+    Properties:
+      LogGroupName: /aws/lambda/booster-cf-helloWorld
+    Type: AWS::Logs::LogGroup
+  lambdaExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - Logs:*
+            Effect: Allow
+            Resource: arn:aws:logs:*:*:*
+          Version: '2012-10-17'
+        PolicyName: booster-function-logs
+    Type: AWS::IAM::Role

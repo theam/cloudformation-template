@@ -1,0 +1,13 @@
+{
+  "name": "theam-cloudformation-template",
+  "version": "1.0.0",
+  "description": "A very basic guide to create an AWS Lambda Function and deploy it with CloudFormation",
+  "main": "",
+  "scripts": {},
+  "author": "Tai Nguyen Bui",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "aws-cli": "^0.0.2"
+  }
+}

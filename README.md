@@ -77,7 +77,7 @@ Resources:
                             Resource: "arn:aws:logs:*:*:*"
 ```
 
-### Creating Log Group for our Lambda function
+### Creating Log Group for our Lambda function
 
 In order to gather the logs for a function, we will create a `LogGroup`
 
@@ -149,7 +149,7 @@ Resources:
 
 Now that we have the function and role defined, we should also define a trigger for the function, for example, an HTTP request through API Gateway
 
-### Api Gateway RestApi
+### Api Gateway RestApi
 
 A RestApi is the first thing to be created and will be in charge of containing all the necessary API Gateway resources to expose our Lambda function
 
